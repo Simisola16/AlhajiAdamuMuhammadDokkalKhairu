@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, ChevronRight, Trophy, Briefcase, Heart, PlayCircle, MapPin, Mail, Phone, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import logoUrl from '../assets/alhajilogo.png';
-import heroImgUrl from '../assets/dokkahhero.jpeg';
+import heroImgUrl from '../assets/heroimg.jpeg';
 import meccaImgUrl from '../assets/alhmecca.jpeg';
 import clubImgUrl from '../assets/club.jpeg';
 import agbadaImgUrl from '../assets/alhagbada.jpeg';
@@ -21,6 +21,7 @@ import idkImgUrl from '../assets/idk.jpeg';
 import whiteImgUrl from '../assets/white.jpeg';
 import vid1Url from '../assets/vid.mp4';
 import vid2Url from '../assets/vid2.mp4';
+
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -122,13 +123,15 @@ const Navbar = () => {
 const Hero = () => {
   return (
     <section className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-[#121212]">
-      {/* Background Image */}
-      <div className="absolute inset-0 w-full h-full z-0">
+      {/* Right Side Image & Overlay */}
+      <div className="absolute top-0 right-0 w-full lg:w-[70%] h-full z-0 opacity-90 lg:opacity-100">
         <img
           src={heroImgUrl}
           alt="Alhaji Adamu Muhammad"
-          className="w-full h-full object-cover object-center"
+          className="w-full h-full object-cover object-[center_15%]"
         />
+        <div className="absolute inset-0 bg-[#121212]/20 lg:bg-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent lg:bg-gradient-to-r lg:from-[#121212] lg:via-transparent lg:to-transparent"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -183,7 +186,7 @@ const About = () => {
           >
             <div className="aspect-[3/4] overflow-hidden">
               <img
-                src={whiteImgUrl}
+                src={agbadaImgUrl}
                 alt="Alhaji Adamu Muhammad Dokkal Khairu"
                 className="w-full h-full object-cover transition-all duration-700"
               />
@@ -250,8 +253,9 @@ const Pillars = () => {
       title: "Corporate & Gold Mining",
       subtitle: "Dokkal Khairu Nigeria Ltd",
       content: "Acting as the industrial mining engine fueling regional economic growth. We focus on ethical extraction, modernizing mining infrastructure in Osun State, and creating sustainable employment. Our corporate mandate prioritizes environmental stewardship alongside aggressive economic expansion, ensuring the region's wealth benefits its people.",
-      image: "https://images.unsplash.com/photo-1587582423116-ec07293f0395?q=80&w=2070&auto=format&fit=crop"
+      image: talkingImgUrl
     },
+
     {
       icon: <Trophy size={24} />,
       title: "Sports Leadership",
