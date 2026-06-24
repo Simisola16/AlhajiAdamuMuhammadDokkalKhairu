@@ -1,0 +1,8 @@
+{
+  "name": "Alhaji Adamu Muhammad Dokkal Khairu Portfolio",
+  "description": "The official personal website of Alhaji Adamu Muhammad Dokkal Khairu, a prominent Nigerian mining magnate, sports administrator, and philanthropist.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
