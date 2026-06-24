@@ -208,7 +208,7 @@ const About = () => {
           >
             <div className="flex items-center space-x-4 mb-6">
               <div className="h-[1px] w-12 bg-gold-500"></div>
-              <span className="text-gold-500 tracking-[0.2em] text-sm uppercase font-medium">The Visionary</span>
+              <span className="text-gold-500 tracking-[0.2em] text-sm uppercase font-medium">The Visionary Philanthropist</span>
             </div>
 
             <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-8">
@@ -281,7 +281,7 @@ const Pillars = () => {
             <span className="text-gold-500 tracking-[0.2em] text-sm uppercase font-medium">Philanthropist Activities</span>
             <div className="h-[1px] w-12 bg-gold-500"></div>
           </div>
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-white">The Three Pillars of <span className="text-gold-500">Impact</span></h2>
+          <h2 className="text-4xl md:text-5xl font-serif font-bold text-white">The Pillars of <span className="text-gold-500">Impact</span></h2>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
