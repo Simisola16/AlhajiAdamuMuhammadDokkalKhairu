@@ -130,6 +130,7 @@ export default function AdminPanel() {
   const checkAuth = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/auth/check`, {
+        credentials: 'include',
         headers: { 'Accept': 'application/json' },
       });
       const data = await res.json();
@@ -152,7 +153,9 @@ export default function AdminPanel() {
     setIsLoadingData(true);
     try {
       // About
-      const resAbout = await fetch(`${API_BASE}/api/about`);
+      const resAbout = await fetch(`${API_BASE}/api/about`, {
+        credentials: 'include',
+      });
       if (resAbout.ok) {
         const data = await resAbout.json();
         setAboutData(data);
@@ -160,7 +163,9 @@ export default function AdminPanel() {
       }
 
       // Impact
-      const resImpact = await fetch(`${API_BASE}/api/impact`);
+      const resImpact = await fetch(`${API_BASE}/api/impact`, {
+        credentials: 'include',
+      });
       if (resImpact.ok) {
         const data = await resImpact.json();
         setImpactData(data);
@@ -168,7 +173,9 @@ export default function AdminPanel() {
       }
 
       // Media
-      const resMedia = await fetch(`${API_BASE}/api/media`);
+      const resMedia = await fetch(`${API_BASE}/api/media`, {
+        credentials: 'include',
+      });
       if (resMedia.ok) {
         const data = await resMedia.json();
         setMediaItems(data);
@@ -218,6 +225,7 @@ export default function AdminPanel() {
     try {
       const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
@@ -237,7 +245,10 @@ export default function AdminPanel() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST' });
+      await fetch(`${API_BASE}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
       setIsAuthenticated(false);
       addToast('info', 'Logged out.');
     } catch (err) {
@@ -262,6 +273,7 @@ export default function AdminPanel() {
 
       const res = await fetch(`${API_BASE}/api/about`, {
         method: 'PUT',
+        credentials: 'include',
         body: formData,
       });
 
@@ -295,6 +307,7 @@ export default function AdminPanel() {
 
       const res = await fetch(`${API_BASE}/api/impact/${activeImpactSlug}`, {
         method: 'PUT',
+        credentials: 'include',
         body: formData,
       });
 
@@ -368,6 +381,7 @@ export default function AdminPanel() {
 
       const res = await fetch(url, {
         method,
+        credentials: 'include',
         body: formData,
       });
 
@@ -398,6 +412,7 @@ export default function AdminPanel() {
     try {
       const res = await fetch(`${API_BASE}/api/media/${deletingMediaItem._id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       if (res.ok) {
         setMediaItems((prev) => prev.filter((x) => x._id !== deletingMediaItem._id));
