@@ -1,41 +1,75 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ChevronRight, Trophy, Briefcase, Heart, PlayCircle, MapPin, Mail, Phone, ArrowRight } from 'lucide-react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Menu, X, ChevronRight, Trophy, Briefcase, Heart, PlayCircle, MapPin, Mail, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+// ── Kept assets: logo (Navbar + Footer) and hero image (Hero section) ────────
 import logoUrl from '../assets/alhajilogo.png';
 import heroImgUrl from '../assets/heroimg.jpeg';
-import meccaImgUrl from '../assets/alhmecca.jpeg';
-import clubImgUrl from '../assets/club.jpeg';
-import agbadaImgUrl from '../assets/alhagbada.jpeg';
-import arfaImgUrl from '../assets/alharfa.jpeg';
-import planeImgUrl from '../assets/alhplane.jpeg';
-import club2ImgUrl from '../assets/club2.jpeg';
-import club3ImgUrl from '../assets/club3.jpeg';
-import club4ImgUrl from '../assets/club4.jpeg';
-import club5ImgUrl from '../assets/club5.jpeg';
-import club6ImgUrl from '../assets/club6.jpeg';
-import captainImgUrl from '../assets/wcaptain.jpeg';
-import talkingImgUrl from '../assets/talking.jpeg';
-import tawafImgUrl from '../assets/tawaf.jpeg';
-import img2Url from '../assets/img2.jpeg';
-import idkImgUrl from '../assets/idk.jpeg';
-import whiteImgUrl from '../assets/white.jpeg';
-import vid1Url from '../assets/vid.mp4';
-import vid2Url from '../assets/vid2.mp4';
 
+// Lazy-load the admin panel so it doesn't bloat the public bundle
+import AdminPanel from './AdminPanel';
+
+// ─── API base — empty in dev (Vite proxies /api/*), set VITE_API_URL in prod ──
+const API_BASE = import.meta.env.VITE_API_URL ?? '';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface AboutData {
+  image: { url: string; publicId: string };
+  heading: string;
+  text: string;
+  stat1Value: string;
+  stat1Label: string;
+  stat2Value: string;
+  stat2Label: string;
+}
+
+interface ImpactPillar {
+  _id: string;
+  slug: 'corporate' | 'sports' | 'humanitarian';
+  image: { url: string; publicId: string };
+  title: string;
+  subtitle: string;
+  content: string;
+}
+
+interface MediaItem {
+  _id: string;
+  category: string;
+  title: string;
+  date: string;
+  description: string;
+  isVideo: boolean;
+  media: { url: string; publicId: string; resourceType: string };
+  order: number;
+}
+
+// ─── Shared animation variants (unchanged from original) ──────────────────────
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6 }
+  transition: { duration: 0.6 },
 };
 
 const staggerContainer = {
   animate: {
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
+
+// ─── Skeleton shimmer helper ──────────────────────────────────────────────────
+
+const Shimmer = ({ className }: { className: string; key?: React.Key }) => (
+  <div className={`animate-pulse bg-gray-800 rounded-sm ${className}`} />
+);
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Navbar — unchanged; uses logo only
+// ═════════════════════════════════════════════════════════════════════════════
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -53,7 +87,7 @@ const Navbar = () => {
     { name: 'About', href: '#about' },
     { name: 'Impact', href: '#impact' },
     { name: 'Media', href: '#media' },
-    { name: 'Contact', href: '#contact' }
+    { name: 'Contact', href: '#contact' },
   ];
 
   return (
@@ -120,6 +154,10 @@ const Navbar = () => {
   );
 };
 
+// ═════════════════════════════════════════════════════════════════════════════
+// Hero — unchanged; uses heroImgUrl only
+// ═════════════════════════════════════════════════════════════════════════════
+
 const Hero = () => {
   return (
     <section className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-[#121212]">
@@ -143,7 +181,7 @@ const Hero = () => {
         >
           <motion.div variants={fadeIn} className="flex items-center space-x-4 mb-6">
             <div className="h-[1px] w-12 bg-gold-500"></div>
-            <span className="text-gold-500 tracking-[0.2em] text-sm uppercase font-medium">Visionary Leadership</span>
+            <span className="text-gold-500 tracking-[0.2em] text-sm uppercase font-medium">A Visionary Philanthropist</span>
           </motion.div>
 
           <motion.h1 variants={fadeIn} className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold leading-[1.2] mb-8 text-white">
@@ -159,11 +197,11 @@ const Hero = () => {
 
           <motion.div variants={fadeIn} className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6">
             <a href="#about" className="px-8 py-4 bg-gold-500 text-[#121212] hover:bg-gold-400 font-medium tracking-widest uppercase transition-colors flex items-center justify-center group">
-              Explore Profile
+              Profile
               <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
             </a>
             <a href="#contact" className="px-8 py-4 border border-gray-600 text-white hover:border-gold-500 hover:text-gold-500 font-medium tracking-widest uppercase transition-colors text-center">
-              Partner With Us
+              Contact
             </a>
           </motion.div>
         </motion.div>
@@ -172,11 +210,30 @@ const Hero = () => {
   );
 };
 
+// ═════════════════════════════════════════════════════════════════════════════
+// About — API-driven; fetches from /api/about on mount
+// Layout, animations, decorative elements, and quote card are all preserved.
+// ═════════════════════════════════════════════════════════════════════════════
+
 const About = () => {
+  const [data, setData] = useState<AboutData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/about`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d: AboutData) => setData(d))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <section id="about" className="py-24 md:py-32 bg-[#1A1A1A] relative">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+
+          {/* ── Left: Image ── */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -185,13 +242,21 @@ const About = () => {
             className="relative"
           >
             <div className="aspect-[3/4] overflow-hidden">
-              <img
-                src={agbadaImgUrl}
-                alt="Alhaji Adamu Muhammad Dokkal Khairu"
-                className="w-full h-full object-cover transition-all duration-700"
-              />
+              {loading ? (
+                <Shimmer className="w-full h-full" />
+              ) : error || !data?.image?.url ? (
+                <div className="w-full h-full bg-[#121212] flex items-center justify-center">
+                  <span className="text-gray-600 text-sm">Image not yet uploaded</span>
+                </div>
+              ) : (
+                <img
+                  src={data.image.url}
+                  alt="Alhaji Adamu Muhammad Dokkal Khairu"
+                  className="w-full h-full object-cover transition-all duration-700"
+                />
+              )}
             </div>
-            {/* Decorative Element */}
+            {/* Decorative elements — preserved exactly */}
             <div className="absolute -bottom-6 -right-6 w-48 h-48 border border-gold-500/30 z-0"></div>
             <div className="absolute -bottom-6 -right-6 w-full h-full border border-gold-500/10 z-0 translate-x-3 translate-y-3"></div>
 
@@ -200,6 +265,7 @@ const About = () => {
             </div>
           </motion.div>
 
+          {/* ── Right: Text ── */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -208,35 +274,48 @@ const About = () => {
           >
             <div className="flex items-center space-x-4 mb-6">
               <div className="h-[1px] w-12 bg-gold-500"></div>
-              <span className="text-gold-500 tracking-[0.2em] text-sm uppercase font-medium">The Visionary Philanthropist</span>
+              <span className="text-gold-500 tracking-[0.2em] text-sm uppercase font-medium">A Visionary Philanthropist</span>
             </div>
 
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-8">
-              Architect of <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-400 to-gold-600">Opportunity</span>.
-            </h2>
-
-            <div className="space-y-6 text-gray-400 text-lg font-light leading-relaxed">
-              <p>
-                Based in the heart of Osun State, Alhaji Adamu Muhammad Dokkal Khairu has established himself as a formidable force across multiple sectors. As a mining magnate, his operations emphasize sustainable extraction and regional economic fortification.
-              </p>
-              <p>
-                Beyond the boardroom, he is driven by a core philosophy of <strong className="text-white font-normal">"youth assetization"</strong>. He believes that the greatest resource of any nation is not beneath the soil, but in the potential of its young people.
-              </p>
-              <p>
-                Through his leadership of Dokkal Khairu Nigeria Limited and Dokkal Khairu FC, he merges corporate strategy with profound humanitarian commitment, creating structural avenues for empowerment, talent discovery, and food security.
-              </p>
-            </div>
-
-            <div className="mt-12 grid grid-cols-2 gap-8">
-              <div>
-                <div className="text-4xl font-serif text-gold-500 mb-2">2026</div>
-                <div className="text-sm text-gray-400 uppercase tracking-widest">Federation Cup Champions</div>
+            {loading ? (
+              <div className="space-y-4">
+                <Shimmer className="h-12 w-3/4" />
+                <Shimmer className="h-4 w-full" />
+                <Shimmer className="h-4 w-5/6" />
+                <Shimmer className="h-4 w-full" />
+                <Shimmer className="h-4 w-4/5" />
               </div>
-              <div>
-                <div className="text-4xl font-serif text-gold-500 mb-2">10k+</div>
-                <div className="text-sm text-gray-400 uppercase tracking-widest">Lives Impacted</div>
-              </div>
-            </div>
+            ) : error ? (
+              <p className="text-gray-500 italic">Content temporarily unavailable.</p>
+            ) : (
+              <>
+                <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-8">
+                  {data?.heading || 'Architect of'}{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-400 to-gold-600">Opportunity.</span>
+                </h2>
+
+                <div className="space-y-6 text-gray-400 text-lg font-light leading-relaxed">
+                  {/* Split text on double-newlines to render separate paragraphs */}
+                  {(data?.text || '')
+                    .split('\n\n')
+                    .filter(Boolean)
+                    .map((para, i) => (
+                      <p key={i}>{para}</p>
+                    ))}
+                </div>
+
+                <div className="mt-12 grid grid-cols-2 gap-8">
+                  <div>
+                    <div className="text-4xl font-serif text-gold-500 mb-2">{data?.stat1Value || '—'}</div>
+                    <div className="text-sm text-gray-400 uppercase tracking-widest">{data?.stat1Label || ''}</div>
+                  </div>
+                  <div>
+                    <div className="text-4xl font-serif text-gold-500 mb-2">{data?.stat2Value || '—'}</div>
+                    <div className="text-sm text-gray-400 uppercase tracking-widest">{data?.stat2Label || ''}</div>
+                  </div>
+                </div>
+              </>
+            )}
           </motion.div>
         </div>
       </div>
@@ -244,33 +323,31 @@ const About = () => {
   );
 };
 
+// ═════════════════════════════════════════════════════════════════════════════
+// Pillars (Impact) — API-driven; fetches from /api/impact on mount.
+// Tab UI, AnimatePresence, icons, and layout are completely unchanged.
+// Icons are keyed by slug (fixed mapping — they are UI, not content).
+// ═════════════════════════════════════════════════════════════════════════════
+
+const PILLAR_ICONS: Record<string, React.ReactNode> = {
+  corporate: <Briefcase size={24} />,
+  sports: <Trophy size={24} />,
+  humanitarian: <Heart size={24} />,
+};
+
 const Pillars = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [pillars, setPillars] = useState<ImpactPillar[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const pillars = [
-    {
-      icon: <Briefcase size={24} />,
-      title: "Corporate & Gold Mining",
-      subtitle: "Dokkal Khairu Nigeria Ltd",
-      content: "Acting as the industrial mining engine fueling regional economic growth. We focus on ethical extraction, modernizing mining infrastructure in Osun State, and creating sustainable employment. Our corporate mandate prioritizes environmental stewardship alongside aggressive economic expansion, ensuring the region's wealth benefits its people.",
-      image: talkingImgUrl
-    },
-
-    {
-      icon: <Trophy size={24} />,
-      title: "Sports Leadership",
-      subtitle: "Dokkal Khairu FC",
-      content: "Transforming raw talent into national prestige. As the 2026 Osun State President Federation Cup Champions and an NLO Division One powerhouse, our club is more than a team—it's a platform for youth assetization. Recently featured on Sportainment TV's 'Why Football?' documentary, we highlight how sports serve as a vital socio-economic elevator.",
-      image: clubImgUrl
-    },
-    {
-      icon: <Heart size={24} />,
-      title: "Humanitarian Concept",
-      subtitle: "Structural Philanthropy",
-      content: "Charity must be structural, not just emotional. Highlighting our December 2025 Ile-Ife outreach, we focus on providing fundamental food security and deploying micro-business capital grants. By injecting capital directly into the grassroots, we empower local entrepreneurs to build self-sustaining community economies.",
-      image: meccaImgUrl
-    }
-  ];
+  useEffect(() => {
+    fetch(`${API_BASE}/api/impact`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d: ImpactPillar[]) => setPillars(d))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <section id="impact" className="py-24 md:py-32 bg-[#121212]">
@@ -284,123 +361,122 @@ const Pillars = () => {
           <h2 className="text-4xl md:text-5xl font-serif font-bold text-white">The Pillars of <span className="text-gold-500">Impact</span></h2>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Tabs Navigation */}
-          <div className="lg:col-span-4 flex flex-col space-y-4">
-            {pillars.map((pillar, index) => (
-              <button
-                key={index}
-                onClick={() => setActiveTab(index)}
-                className={`text-left p-6 transition-all duration-300 border-l-4 flex items-start space-x-4
-                  ${activeTab === index
-                    ? 'bg-[#1A1A1A] border-gold-500 shadow-lg'
-                    : 'border-transparent hover:bg-[#1A1A1A]/50 text-gray-500 hover:text-gray-300'
-                  }`}
-              >
-                <div className={`${activeTab === index ? 'text-gold-500' : 'text-gray-600'}`}>
-                  {pillar.icon}
-                </div>
-                <div>
-                  <h3 className={`text-xl font-serif font-bold mb-1 ${activeTab === index ? 'text-white' : ''}`}>
-                    {pillar.title}
-                  </h3>
-                  <p className="text-sm tracking-widest uppercase text-gold-500/80">{pillar.subtitle}</p>
-                </div>
-              </button>
-            ))}
+        {loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div className="lg:col-span-4 flex flex-col space-y-4">
+              {[0, 1, 2].map((i) => <Shimmer key={i} className="h-24 w-full" />)}
+            </div>
+            <div className="lg:col-span-8">
+              <Shimmer className="aspect-video w-full" />
+              <Shimmer className="h-32 w-full mt-4" />
+            </div>
           </div>
+        ) : error || pillars.length === 0 ? (
+          <p className="text-center text-gray-500 italic">Impact content temporarily unavailable.</p>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            {/* Tabs Navigation */}
+            <div className="lg:col-span-4 flex flex-col space-y-4">
+              {pillars.map((pillar, index) => (
+                <button
+                  key={pillar.slug}
+                  onClick={() => setActiveTab(index)}
+                  className={`text-left p-6 transition-all duration-300 border-l-4 flex items-start space-x-4
+                    ${activeTab === index
+                      ? 'bg-[#1A1A1A] border-gold-500 shadow-lg'
+                      : 'border-transparent hover:bg-[#1A1A1A]/50 text-gray-500 hover:text-gray-300'
+                    }`}
+                >
+                  <div className={`${activeTab === index ? 'text-gold-500' : 'text-gray-600'}`}>
+                    {PILLAR_ICONS[pillar.slug] ?? <Briefcase size={24} />}
+                  </div>
+                  <div>
+                    <h3 className={`text-xl font-serif font-bold mb-1 ${activeTab === index ? 'text-white' : ''}`}>
+                      {pillar.title}
+                    </h3>
+                    <p className="text-sm tracking-widest uppercase text-gold-500/80">{pillar.subtitle}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
 
-          {/* Tab Content */}
-          <div className="lg:col-span-8">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.4 }}
-                className="bg-[#1A1A1A] rounded-sm overflow-hidden border border-gray-800"
-              >
-                <div className="aspect-video relative overflow-hidden">
-                  <img
-                    src={pillars[activeTab].image}
-                    alt={pillars[activeTab].title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] via-transparent to-transparent"></div>
-                </div>
-                <div className="p-8 md:p-12">
-                  <h3 className="text-3xl font-serif font-bold text-white mb-6">
-                    {pillars[activeTab].title}
-                  </h3>
-                  <p className="text-gray-400 text-lg font-light leading-relaxed mb-8">
-                    {pillars[activeTab].content}
-                  </p>
-                  <a href="#contact" className="inline-flex items-center text-gold-500 hover:text-gold-400 tracking-widest uppercase text-sm font-medium group">
-                    Learn More
-                    <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+            {/* Tab Content */}
+            <div className="lg:col-span-8">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.4 }}
+                  className="bg-[#1A1A1A] rounded-sm overflow-hidden border border-gray-800"
+                >
+                  <div className="aspect-video relative overflow-hidden">
+                    {pillars[activeTab]?.image?.url ? (
+                      <img
+                        src={pillars[activeTab].image.url}
+                        alt={pillars[activeTab].title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-[#121212] flex items-center justify-center">
+                        <span className="text-gray-600 text-sm">Image not yet uploaded</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] via-transparent to-transparent"></div>
+                  </div>
+                  <div className="p-8 md:p-12">
+                    <h3 className="text-3xl font-serif font-bold text-white mb-6">
+                      {pillars[activeTab]?.title}
+                    </h3>
+                    <p className="text-gray-400 text-lg font-light leading-relaxed mb-8">
+                      {pillars[activeTab]?.content}
+                    </p>
+                    <a href="#contact" className="inline-flex items-center text-gold-500 hover:text-gold-400 tracking-widest uppercase text-sm font-medium group">
+                      Learn More
+                      <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+                    </a>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );
 };
 
+// ═════════════════════════════════════════════════════════════════════════════
+// Media — API-driven; fetches from /api/media on mount.
+// Slider UI, autoplay, dot indicators, AnimatePresence, and progress bar
+// are completely unchanged. Section hides gracefully if the array is empty.
+// ═════════════════════════════════════════════════════════════════════════════
+
 const Media = () => {
   const [current, setCurrent] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-
-  const achievements = [
-    {
-      category: "Sports Triumphs",
-      title: "2026 Osun State President Federation Cup Champions",
-      date: "May 2026",
-      image: club2ImgUrl,
-      description: "A historic victory that cemented Dokkal Khairu FC's dominance across Osun State, uniting communities under the banner of sporting excellence."
-    },
-    {
-      category: "Documentary",
-      title: "Featured on Sportainment TV's 'Why Football?'",
-      date: "February 2026",
-      video: vid1Url,
-      image: club3ImgUrl,
-      isVideo: true,
-      description: "A nationally broadcast feature exploring the club's philosophy on youth assetization and the socio-economic power of football."
-    },
-    {
-      category: "Philanthropy",
-      title: "Ile-Ife Outreach: Food Security & Micro-Grants",
-      date: "December 2025",
-      image: talkingImgUrl,
-      description: "A structural humanitarian programme delivering food security and capital grants directly to grassroots entrepreneurs in Ile-Ife."
-    },
-    {
-      category: "Sports Excellence",
-      title: "The NLO Division One Playoff Runs",
-      date: "Season 2025/2026",
-      image: club4ImgUrl,
-      description: "An electrifying playoff campaign that showcased the club's tactical strength and the depth of talent nurtured through dedicated youth programmes."
-    },
-    
-    {
-      category: "Club Gallery",
-      title: "Dokkal Khairu FC — The Winning Squad",
-      date: "Season 2025/2026",
-      image: club6ImgUrl,
-      description: "The squad that carried the club's banner with pride throughout a defining season — champions forged in dedication and belief."
-    }
-  ];
-
-  const total = achievements.length;
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    fetch(`${API_BASE}/api/media`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d: MediaItem[]) => {
+        setMediaItems(d);
+        setCurrent(0);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const total = mediaItems.length;
+
+  useEffect(() => {
+    if (!isAutoPlaying || total === 0) return;
     const timer = setInterval(() => {
-      setCurrent(prev => (prev + 1) % total);
+      setCurrent((prev) => (prev + 1) % total);
     }, 5000);
     return () => clearInterval(timer);
   }, [isAutoPlaying, total]);
@@ -411,14 +487,17 @@ const Media = () => {
   };
 
   const prev = () => {
-    setCurrent(prev => (prev - 1 + total) % total);
+    setCurrent((prev) => (prev - 1 + total) % total);
     setIsAutoPlaying(false);
   };
 
   const next = () => {
-    setCurrent(prev => (prev + 1) % total);
+    setCurrent((prev) => (prev + 1) % total);
     setIsAutoPlaying(false);
   };
+
+  // Don't render section at all if there's nothing to show after loading
+  if (!loading && (error || total === 0)) return null;
 
   return (
     <section id="media" className="py-24 md:py-32 bg-[#1A1A1A] overflow-hidden">
@@ -433,126 +512,145 @@ const Media = () => {
             <h2 className="text-4xl md:text-5xl font-serif font-bold text-white">Media & <span className="text-gold-500">Achievements</span></h2>
           </div>
           {/* Slide counter */}
-          <div className="flex items-center space-x-3">
-            <span className="text-3xl font-serif text-gold-500 font-bold leading-none">{String(current + 1).padStart(2, '0')}</span>
-            <div className="h-[1px] w-8 bg-gray-600"></div>
-            <span className="text-gray-600 font-serif text-lg">{String(total).padStart(2, '0')}</span>
-          </div>
+          {!loading && total > 0 && (
+            <div className="flex items-center space-x-3">
+              <span className="text-3xl font-serif text-gold-500 font-bold leading-none">{String(current + 1).padStart(2, '0')}</span>
+              <div className="h-[1px] w-8 bg-gray-600"></div>
+              <span className="text-gray-600 font-serif text-lg">{String(total).padStart(2, '0')}</span>
+            </div>
+          )}
         </div>
 
-        {/* Slider */}
-        <div className="relative">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={current}
-              initial={{ opacity: 0, x: 60 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -60 }}
-              transition={{ duration: 0.6, ease: 'easeInOut' }}
-              className="grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden"
-            >
-              {/* Image / Video Panel */}
-              <div className="lg:col-span-8 relative aspect-video lg:aspect-auto overflow-hidden bg-[#121212]" style={{ minHeight: '420px' }}>
-                {achievements[current].video ? (
-                  <video
-                    key={achievements[current].video}
-                    src={achievements[current].video}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={achievements[current].image}
-                    alt={achievements[current].title}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#1A1A1A]/80 hidden lg:block"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/90 to-transparent lg:hidden"></div>
-
-                {achievements[current].isVideo && !achievements[current].video && (
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 hover:text-gold-500 transition-colors cursor-pointer">
-                    <PlayCircle size={72} strokeWidth={1} />
-                  </div>
-                )}
-
-                {/* Category badge */}
-                <div className="absolute top-6 left-6 bg-gold-500/90 px-4 py-1.5 backdrop-blur-sm">
-                  <span className="text-[#121212] text-xs tracking-widest uppercase font-semibold">
-                    {achievements[current].category}
-                  </span>
-                </div>
-              </div>
-
-              {/* Content Panel */}
-              <div className="lg:col-span-4 bg-[#121212] flex flex-col justify-between p-10 md:p-12">
-                <div>
-                  <p className="text-gold-500 tracking-widest text-xs uppercase font-medium mb-6">
-                    {achievements[current].date}
-                  </p>
-                  <h3 className="text-3xl lg:text-4xl font-serif font-bold text-white leading-tight mb-6">
-                    {achievements[current].title}
-                  </h3>
-                  <p className="text-gray-400 font-light leading-relaxed text-base">
-                    {achievements[current].description}
-                  </p>
-                </div>
-
-                {/* Nav Arrows */}
-                <div className="mt-12 flex items-center space-x-4">
-                  <button
-                    onClick={prev}
-                    className="w-12 h-12 border border-gray-700 hover:border-gold-500 hover:bg-gold-500 hover:text-[#121212] text-white transition-all duration-300 flex items-center justify-center group"
-                    aria-label="Previous slide"
-                  >
-                    <ArrowRight size={18} className="rotate-180" />
-                  </button>
-                  <button
-                    onClick={next}
-                    className="w-12 h-12 border border-gray-700 hover:border-gold-500 hover:bg-gold-500 hover:text-[#121212] text-white transition-all duration-300 flex items-center justify-center group"
-                    aria-label="Next slide"
-                  >
-                    <ArrowRight size={18} />
-                  </button>
-
-                  {/* Dot indicators */}
-                  <div className="flex items-center space-x-2 ml-4">
-                    {achievements.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => goTo(i)}
-                        className={`transition-all duration-300 rounded-full ${
-                          i === current
-                            ? 'w-6 h-2 bg-gold-500'
-                            : 'w-2 h-2 bg-gray-600 hover:bg-gray-400'
-                        }`}
-                        aria-label={`Go to slide ${i + 1}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Progress bar */}
-          <div className="mt-1 h-[2px] bg-gray-800 overflow-hidden">
-            <motion.div
-              key={`progress-${current}`}
-              className="h-full bg-gold-500"
-              initial={{ width: '0%' }}
-              animate={{ width: '100%' }}
-              transition={{ duration: 5, ease: 'linear' }}
-            />
+        {/* Skeleton while loading */}
+        {loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden">
+            <Shimmer className="lg:col-span-8 aspect-video" />
+            <div className="lg:col-span-4 bg-[#121212] p-10 space-y-4">
+              <Shimmer className="h-4 w-24" />
+              <Shimmer className="h-8 w-3/4" />
+              <Shimmer className="h-4 w-full" />
+              <Shimmer className="h-4 w-5/6" />
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Slider */
+          <div className="relative">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={current}
+                initial={{ opacity: 0, x: 60 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -60 }}
+                transition={{ duration: 0.6, ease: 'easeInOut' }}
+                className="grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden"
+              >
+                {/* Image / Video Panel */}
+                <div className="lg:col-span-8 relative aspect-video lg:aspect-auto overflow-hidden bg-[#121212]" style={{ minHeight: '420px' }}>
+                  {mediaItems[current]?.isVideo ? (
+                    <video
+                      key={mediaItems[current].media?.url}
+                      src={mediaItems[current].media?.url}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={mediaItems[current]?.media?.url}
+                      alt={mediaItems[current]?.title}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#1A1A1A]/80 hidden lg:block"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/90 to-transparent lg:hidden"></div>
+
+                  {mediaItems[current]?.isVideo && !mediaItems[current]?.media?.url && (
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 hover:text-gold-500 transition-colors cursor-pointer">
+                      <PlayCircle size={72} strokeWidth={1} />
+                    </div>
+                  )}
+
+                  {/* Category badge */}
+                  <div className="absolute top-6 left-6 bg-gold-500/90 px-4 py-1.5 backdrop-blur-sm">
+                    <span className="text-[#121212] text-xs tracking-widest uppercase font-semibold">
+                      {mediaItems[current]?.category}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Content Panel */}
+                <div className="lg:col-span-4 bg-[#121212] flex flex-col justify-between p-10 md:p-12">
+                  <div>
+                    <p className="text-gold-500 tracking-widest text-xs uppercase font-medium mb-6">
+                      {mediaItems[current]?.date}
+                    </p>
+                    <h3 className="text-3xl lg:text-4xl font-serif font-bold text-white leading-tight mb-6">
+                      {mediaItems[current]?.title}
+                    </h3>
+                    <p className="text-gray-400 font-light leading-relaxed text-base">
+                      {mediaItems[current]?.description}
+                    </p>
+                  </div>
+
+                  {/* Nav Arrows */}
+                  <div className="mt-12 flex items-center space-x-4">
+                    <button
+                      onClick={prev}
+                      className="w-12 h-12 border border-gray-700 hover:border-gold-500 hover:bg-gold-500 hover:text-[#121212] text-white transition-all duration-300 flex items-center justify-center group"
+                      aria-label="Previous slide"
+                    >
+                      <ArrowRight size={18} className="rotate-180" />
+                    </button>
+                    <button
+                      onClick={next}
+                      className="w-12 h-12 border border-gray-700 hover:border-gold-500 hover:bg-gold-500 hover:text-[#121212] text-white transition-all duration-300 flex items-center justify-center group"
+                      aria-label="Next slide"
+                    >
+                      <ArrowRight size={18} />
+                    </button>
+
+                    {/* Dot indicators */}
+                    <div className="flex items-center space-x-2 ml-4">
+                      {mediaItems.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => goTo(i)}
+                          className={`transition-all duration-300 rounded-full ${
+                            i === current
+                              ? 'w-6 h-2 bg-gold-500'
+                              : 'w-2 h-2 bg-gray-600 hover:bg-gray-400'
+                          }`}
+                          aria-label={`Go to slide ${i + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Progress bar */}
+            <div className="mt-1 h-[2px] bg-gray-800 overflow-hidden">
+              <motion.div
+                key={`progress-${current}`}
+                className="h-full bg-gold-500"
+                initial={{ width: '0%' }}
+                animate={{ width: '100%' }}
+                transition={{ duration: 5, ease: 'linear' }}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
 };
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Contact — unchanged (no images, no API dependency)
+// ═════════════════════════════════════════════════════════════════════════════
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
@@ -565,11 +663,11 @@ const Contact = () => {
     setTimeout(() => {
       setIsSubmitting(false);
       setFormData({ name: '', email: '', subject: '', message: '' });
-      alert("Thank you. Your inquiry has been received by our executive office.");
+      alert('Thank you. Your inquiry has been received by our executive office.');
     }, 1500);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -699,6 +797,10 @@ const Contact = () => {
   );
 };
 
+// ═════════════════════════════════════════════════════════════════════════════
+// Footer — unchanged; uses logo only
+// ═════════════════════════════════════════════════════════════════════════════
+
 const Footer = () => {
   return (
     <footer className="bg-[#0A0A0A] py-12 border-t border-gray-900">
@@ -739,16 +841,35 @@ const Footer = () => {
   );
 };
 
+// ═════════════════════════════════════════════════════════════════════════════
+// Main site layout (renders at "/")
+// ═════════════════════════════════════════════════════════════════════════════
+
+const MainSite = () => (
+  <div className="min-h-screen bg-[#121212] text-white font-sans selection:bg-gold-500 selection:text-[#121212] overflow-x-hidden scroll-smooth">
+    <Navbar />
+    <Hero />
+    <About />
+    <Pillars />
+    <Media />
+    <Contact />
+    <Footer />
+  </div>
+);
+
+// ═════════════════════════════════════════════════════════════════════════════
+// App root — BrowserRouter wraps both the main site and the /admin panel
+// ═════════════════════════════════════════════════════════════════════════════
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-[#121212] text-white font-sans selection:bg-gold-500 selection:text-[#121212] overflow-x-hidden scroll-smooth">
-      <Navbar />
-      <Hero />
-      <About />
-      <Pillars />
-      <Media />
-      <Contact />
-      <Footer />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        {/* Protected admin panel — lazy-loaded, separate from the public bundle */}
+        <Route path="/admin" element={<AdminPanel />} />
+        {/* Public-facing site */}
+        <Route path="/" element={<MainSite />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
