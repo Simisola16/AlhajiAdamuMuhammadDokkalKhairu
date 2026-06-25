@@ -94,10 +94,10 @@ const Navbar = () => {
     <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-[#121212]/95 backdrop-blur-md py-4 shadow-lg shadow-black/50' : 'bg-transparent py-6'}`}>
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex justify-between items-center">
         <a href="#" className="flex items-center">
-          <img src={logoUrl} alt="Dokkal Khairu Logo" className="h-20 w-auto object-contain" />
-          <div className="hidden md:flex flex-col ml-3">
-            <h1 className="text-xl font-serif font-bold text-white leading-tight">Alhaji Adamu Muhammad</h1>
-            <p className="text-gold-500 text-sm tracking-widest uppercase mt-0.5">Dokkal Khairu</p>
+          <img src={logoUrl} alt="Dokkal Khairu Logo" className="h-16 sm:h-20 w-auto object-contain" />
+          <div className="flex flex-col ml-3">
+            <h1 className="text-sm sm:text-lg md:text-xl font-serif font-bold text-white leading-tight">Alhaji Adamu Muhammad</h1>
+            <p className="text-[9px] sm:text-xs md:text-sm text-gold-500 tracking-widest uppercase mt-0.5">Dokkal Khairu</p>
           </div>
         </a>
 
@@ -160,7 +160,7 @@ const Navbar = () => {
 
 const Hero = () => {
   return (
-    <section className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-[#121212]">
+    <section className="relative min-h-screen flex items-start lg:items-center pt-20 overflow-hidden bg-[#121212]">
       {/* Right Side Image & Overlay */}
       <div className="absolute top-0 right-0 w-full lg:w-[70%] h-full z-0 opacity-90 lg:opacity-100">
         <img
@@ -172,7 +172,7 @@ const Hero = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent lg:bg-gradient-to-r lg:from-[#121212] lg:via-transparent lg:to-transparent"></div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center pt-[45vh] pb-16 lg:pt-0 lg:pb-0">
         <motion.div
           initial="initial"
           animate="animate"
@@ -353,7 +353,7 @@ const Pillars = () => {
     <section id="impact" className="py-24 md:py-32 bg-[#121212]">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
-          <div className="flex items-center justify-center space-x-4 mb-4">
+          <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="h-[1px] w-12 bg-gold-500"></div>
             <span className="text-gold-500 tracking-[0.2em] text-sm uppercase font-medium">Philanthropist Activities</span>
             <div className="h-[1px] w-12 bg-gold-500"></div>
